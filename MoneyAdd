@@ -1,0 +1,223 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+ 
+<title>富士康工资计算</title>
+	<!--这个版本基本可以计算所以的员级与师级的工资（待测试2018.8.31-->
+	<!--2018.9月开始失业保险个人缴11元-->
+    <!--2018.10.3禁止手机浏览器缩放功能，排版优化-->
+    <!--2018.10.8增加了登陆功能，缺陷①：姓名和工号无法实时写入-->
+	<!--2018.10.15修改个税起征点为5000-->
+    <!--2018.10.26登陆功能缺陷①已修复，缺陷②：无法判断姓名工号的合法性，③：加班超过100时实发工资会错误-->
+	<!--2018.10.31缺陷③已修复，-->
+    <!--2018.11.4重新排版，优化工资计算不合理BUG，添加注释--> 
+	<style>
+	/*按钮样式*/
+	.button{
+			width:70px;
+			height:51px;
+		}
+	/*显示框样式*/
+	.showText{
+		 width:200px;
+		 height:20px;
+		 background:#CCC;
+		 color: #2D0FED;
+		 text-align:center;
+	 	}
+	/*输入框样式*/
+	.inputFrame{
+		height:25px;
+		width:100%;
+		background:hsla(358,28%,72%,1.00);
+		}
+	/*显示计算面板*/	
+	#dShowDisplay{
+			display:none;
+			}
+	/*底薪，补贴，加班1，加班2，夜班补贴*/
+	#basicSalary,#subsidizeRevenue,#overtime1,#overtime2,#nightShiftAllowance{
+		color:#F00
+		}
+	</style>
+    
+	<script> 
+	window.onload=function(){
+		 //快捷获取ID
+		var oBasicSalary=document.getElementById('basicSalary');
+		var oSubsidizeRevenue=document.getElementById('subsidizeRevenue');
+		var oOvertime1=document.getElementById('overtime1');
+		var oOvertime2=document.getElementById('overtime2');
+		var oNightShiftAllowance=document.getElementById('nightShiftAllowance');
+		var oSocialSecurity=document.getElementById('socialSecurity');
+		var oBoardWages=document.getElementById('boardWages');
+		var oShouldSalary=document.getElementById('shouldSalary');
+		var oActualSalary=document.getElementById('actualSalary');
+		
+		//输入框提示信息
+		oBasicSalary.title='请输入底薪';
+		oSubsidizeRevenue.title='请输入补贴';
+		oOvertime1.title='请输入加班1时长';
+		oOvertime2.title='请输入加班2时长';
+		oNightShiftAllowance.title='夜班补助';
+		oBoardWages.title='伙食费';
+		oSocialSecurity.title='五险一金';
+		oShouldSalary.title='应发工资';
+		oActualSalary.title='实发工资';
+		}
+	//登陆方法，名字+工号
+	 function welcome(name,workNum){  
+		   alert('欢迎您：'+name+'\n你的工号是：'+workNum);
+		     document.getElementById("tim").innerHTML=
+			 "欢迎你："+name+"		工号："+workNum;
+			 //登陆框隐藏
+			 dl1.style.display="none";
+			 //基本输入信息块
+			 dLanding.style.display="block";
+			 //结果块
+	 		 dShowDisplay.style.display="block";
+	   }
+	 //五险一金自动计算方法，按键松开后完成
+	 function salaryCalculator(){
+		var oBasicSalary=document.getElementById('basicSalary');
+		var oSocialSecurity=document.getElementById('socialSecurity');
+		oSocialSecurity.value=Math.ceil((Number(oBasicSalary.value)*0.13+11+8.35)*100)/100;
+	 }
+	 //获取工资结果
+	function getResult(){
+		//显示结果框
+		in2.style.display="block";
+
+		var oBasicSalary=document.getElementById('basicSalary');
+		var oSubsidizeRevenue=document.getElementById('subsidizeRevenue');
+		var oOvertime1=document.getElementById('overtime1');
+		var oOvertime2=document.getElementById('overtime2');
+		var oNightShiftAllowance=document.getElementById('nightShiftAllowance');
+		var oSocialSecurity=document.getElementById('socialSecurity');
+		var oBoardWages=document.getElementById('boardWages');
+		var oShouldSalary=document.getElementById('shouldSalary');
+		var oActualSalary=document.getElementById('actualSalary');
+		//正则判断式
+		var reg=/^[0-9]+.?[0-9]*$/;
+		//判断条件为各输入栏是否为数字
+		if(
+		    reg.test(oBasicSalary.value)
+			&&reg.test(oSubsidizeRevenue.value)
+			&&reg.test(oOvertime1.value)
+			&&reg.test(oOvertime2.value)
+			&&reg.test(oNightShiftAllowance.value)
+			&&reg.test(oSocialSecurity.value)
+			&&reg.test(oBoardWages.value)
+					)
+		//条件成立则计算工资
+		{
+			//a为应发工资值
+			var a=Number(oBasicSalary.value)
+			+Number(oSubsidizeRevenue.value)
+			+Math.ceil((Number(oOvertime1.value)*Number(oBasicSalary.value)/116
+			+Number(oOvertime2.value)*Number(oBasicSalary.value)/87)*100)/100
+			+Number(oNightShiftAllowance.value);
+			//给值取整约分
+			oShouldSalary.value='应发工资：'+Math.ceil(a*100)/100;
+			//判断是否符合缴税资格
+			//工资不超过5000
+			if(a-Number(oSocialSecurity.value)<5000){
+				oActualSalary.value='实发工资：'
+									+Math.ceil(
+						  						 (a-Number(oSocialSecurity.value)
+												 -Number(oBoardWages.value)
+											)*100)/100;
+			}
+			//工资不超过8000
+			else if(a-Number(oSocialSecurity.value)<=8000&&a-Number(oSocialSecurity.value)>5000){
+				oActualSalary.value='实发工资：'
+									+Math.ceil(
+												   (a-Number(oSocialSecurity.value)
+												   -(a-Number(oSocialSecurity.value)-5000)*0.03
+												   -Number(oBoardWages.value)
+											 )*100)/100;
+							}
+			//工资不超过12500
+			else if(a-Number(oSocialSecurity.value)<=12500&&a-Number(oSocialSecurity.value)>8000){
+				oActualSalary.value='实发工资：'
+									+Math.ceil(
+						 						  (a-Number(oSocialSecurity.value)
+												 -(a-Number(oSocialSecurity.value)-5000)*0.1+105
+												 -Number(oBoardWages.value)
+							 				)*100)/100;
+							}
+			//工资不超过38500
+			else if(a-Number(oSocialSecurity.value)<=38500&&a-Number(oSocialSecurity.value)>12500){
+				oActualSalary.value='实发工资：'
+									+Math.ceil(
+						 						  (a-Number(oSocialSecurity.value)
+												 -(a-Number(oSocialSecurity.value)-5000)*0.2+555
+												 -Number(oBoardWages.value)
+											)*100)/100;
+							}
+			//工资不超过58500
+			else if(a-Number(oSocialSecurity.value)<=58500&&a-Number(oSocialSecurity.value)>38500){
+				oActualSalary.value='实发工资：'
+									+Math.ceil(
+						 						(a-Number(oSocialSecurity.value)
+												 -(a-Number(oSocialSecurity.value)-5000)*0.25+1005
+							 					-Number(oBoardWages.value)
+											 )*100)/100;
+							}
+			//工资不超过83500
+			else if(a-Number(oSocialSecurity.value)<=83500&&a-Number(oSocialSecurity.value)>58500){
+				oActualSalary.value='实发工资：'
+									+Math.ceil(
+											   	(a-Number(oSocialSecurity.value)
+												-(a-Number(oSocialSecurity.value)-5000)*0.3+2755
+												-Number(oBoardWages.value)
+											)*100)/100;
+					  		}
+			//工资超过83500
+			else if(a-Number(oSocialSecurity.value)>83500){
+				oActualSalary.value='实发工资：'
+									+Math.ceil(
+											   	(a-Number(oSocialSecurity.value)
+												-(a-Number(oSocialSecurity.value)-5000)*0.35+5505
+												-Number(oBoardWages.value)
+											)*100)/100;
+							}					
+			}
+		//条件不成立
+		else{
+			alert('请输入数字');	
+			oShouldSalary.value='前面输入有误';
+			oActualSalary.value='前面输入有误';		
+		}	
+	}	
+	</script>
+    </head>
+<body>
+<div id="dl1">
+		姓名<input id="name1" class="inputFrame" type="text" value="";/><br/>
+    	工号<input id="workNum1" class="inputFrame" type="text" value=""/><br/>
+        <input id="landing" class="button" type="button" value="登陆" onClick="welcome(name1.value,workNum1.value)"/>
+    </div>
+         
+        <div id="tim"></div>
+<div id="dLanding" style="display:none">
+		底薪<input id="basicSalary" class="inputFrame" type="text" value="" onKeyUp="salaryCalculator();"/>
+		补贴<input id="subsidizeRevenue" class="inputFrame" type="text" value="" />
+		加班1时长<input id="overtime1" class="inputFrame" type="text" value="" />
+		加班2时长<input id="overtime2" class="inputFrame" type="text" value=""  />
+		夜班补助<input id="nightShiftAllowance" class="inputFrame" type="text" value="" />
+		伙食费扣除<input id="boardWages" class="inputFrame" type="text" value=""/>
+    	五险一金<input id="socialSecurity" class="inputFrame" type="text"/>
+</div>
+<div id="dShowDisplay">
+	<div id="in1">
+    	 <input id="btn1" type="button" class="button" value="计算" onClick="getResult()"/></div>
+	<div id="in2" style="display:none">
+  		 <input id="shouldSalary" class="showText" type="text" readonly unselectable="on"  value="应发工资：0"/><br/>
+		 <input id="actualSalary" class="showText" type="text" readonly unselectable="on"  value="实发工资:0"/>
+    </div>
+	</div>
+</body>
+</html>
